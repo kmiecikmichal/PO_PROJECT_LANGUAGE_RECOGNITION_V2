@@ -1,8 +1,7 @@
-#projekcik v2 tworzenie bazy danych- mapy bigramów 
 import pickle
 
-language = "Spanish"
-with open(language + "Text.txt", encoding = "utf-8") as f:
+language = "New"
+with open(language + "Text.txt") as f:
     words = f.read().lower()
     words.split()
 
@@ -13,58 +12,30 @@ def lan_bigrams():
     for i in range (len(words)-1):
         bigrams.append(words[i] + words[i+1])
 
-    return bigrams
-
-
-def lan_counts():
-
-    bigrams = lan_bigrams()
 
     counts = []
     for i in range (len(bigrams)):
         c = (bigrams.count(bigrams[i])/len(bigrams))
         counts.append(c)
 
-    return counts
-
-
-def lan_values():
-
-    bigrams = lan_bigrams()
-    counts = lan_counts()
 
     values = []
     for i in range (len(bigrams)):
         values.append([bigrams[i], counts[i]])
 
-    return values
-
-
-def lan_uniques():
-    #zwraca mapę bigramów z bazy danych
-    values = lan_values()
 
     uniques = []
     for i in range (len(values)):
         if values[i] not in uniques:
             uniques.append(values[i])
 
-    return uniques
 
-
-def lan_unique_bigrams():
-    uniques = lan_uniques()
-
-    literki = []
+    letters = []
     for i in range (len(uniques)):
         for j in range (len(uniques[i])):
             if j == 1:
-                literki.append(uniques[i][0])
+                letters.append(uniques[i][0])
 
-    return literki
-
-
-def mod_bigrams():
 
     all = ['a','b','c','d','e','f','g','h','i','j',
            'k','l','m','n','o','p','q','r','s','t',
@@ -79,27 +50,15 @@ def mod_bigrams():
             if not i == j == " ": #często się pojawiały 2 spacje
                 model_bigrams.append(i + j)
 
-    return model_bigrams
-
-
-def mod_values():
-    #zwraca mapę wszystkich bigramów
-    model_bigrams = mod_bigrams()
 
     model_values = []
     for i in range (len(model_bigrams)):
         model_values.append([model_bigrams[i], 0])
 
-    return model_values
-
-
-def lang_map():
-    
-    lan_big = lan_unique_bigrams()
-    lan_map = lan_uniques()
-
-    mod_big = mod_bigrams()
-    mod_map = mod_values()
+    lan_big = letters
+    lan_map = uniques
+    mod_big = model_bigrams
+    mod_map = model_values
 
     lan_big_new = []
     lan_map_new = []
@@ -114,17 +73,16 @@ def lang_map():
             lan_map_new.append(mod_map[i])
 
     language_map = sorted(lan_map_new)
-    return language_map
 
 
-language_map = lang_map()
+    #zapis
+    with open(language + "Base.txt", "wb") as w:
+        pickle.dump(language_map, w)
 
-#zapis
-with open(language + "Base.txt", "wb") as w:
-    pickle.dump(language_map, w)
+    #odczyt
+    with open(language + "Base.txt", "rb",) as f:
+        b = pickle.load(f)
 
-#odczyt
-with open(language + "Base.txt", "rb",) as f:
-    b = pickle.load(f)
+    return b
 
-print(b)
+lan_bigrams()
