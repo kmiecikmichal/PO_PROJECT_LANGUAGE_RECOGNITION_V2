@@ -1,16 +1,28 @@
-import pickle
+import os
 import re
+import pickle
+import matplotlib
+import matplotlib.pyplot as plt
+from tkinter import *
 from bs4 import BeautifulSoup
 from urllib.error import URLError
 from urllib.request import urlopen
+import time as t
 
 def recognition():
+    start = t.time()
 
-    urladdress = "interia.pl"
+    try: os.remove("plot.png")
+    except: pass
+
+    urladdress = e1.get()
     url = "http://" + urladdress
 
     try: html = urlopen(url).read()
     except URLError:
+        l1.place_forget()
+        l4.config(text = "Page not found")
+        master.minsize(540,274)
         return 
 
     soup = BeautifulSoup(html,"html.parser")
@@ -106,7 +118,7 @@ def recognition():
         map_ita = pickle.load(ita)
 
 
-    err_pol, err_eng, err_fra, err_esp, err_ger, err_ita = 0, 0, 0, 0, 0, 0 
+    err_pol, err_eng, err_fra, err_ger, err_ita, err_esp = 0, 0, 0, 0, 0, 0 
 
     for i in range(len(map_txt)):
         for j in range(len(map_txt[i])):
@@ -114,25 +126,121 @@ def recognition():
                 err_pol += ((map_pol[i][j] - map_txt[i][j]) ** 2)
                 err_eng += ((map_eng[i][j] - map_txt[i][j]) ** 2)
                 err_fra += ((map_fra[i][j] - map_txt[i][j]) ** 2)
-                err_esp += ((map_esp[i][j] - map_txt[i][j]) ** 2)
                 err_ger += ((map_ger[i][j] - map_txt[i][j]) ** 2)
                 err_ita += ((map_ita[i][j] - map_txt[i][j]) ** 2)
+                err_esp += ((map_esp[i][j] - map_txt[i][j]) ** 2)
+ 
 
-    print("pol ", err_pol)
-    print("eng ", err_eng)
-    print("fra ", err_fra)
-    print("esp ", err_esp)
-    print("ger ", err_ger)
-    print("ita ", err_ita)
+    if   words != []:
+          
+         try: plt.clf()
+         except: pass
+
+         hist_lan = ("POL","ENG","FRA","GER","ITA","ESP")
+         hist_val = (err_pol,err_eng,err_fra,err_ger,err_ita,err_esp)
+
+         plt.bar(hist_lan, hist_val)
+         plt.title("Error of language map similarity")
+         plt.ylabel("Error")
+         plt.savefig("plot.png")
+
+
+    if   words == []:
+         lang = "No language in the database or insufficient data"
+
+    elif err_pol < err_eng and err_pol < err_fra and err_pol < err_esp and err_pol < err_ger and err_pol < err_ita:
+         lang = "Polish language"
+
+    elif err_eng < err_pol and err_eng < err_fra and err_eng < err_esp and err_eng < err_ger and err_eng < err_ita:
+         lang = "English language"
+
+    elif err_fra < err_eng and err_fra < err_pol and err_fra < err_esp and err_fra < err_ger and err_fra < err_ita:
+         lang = "French language"
+    
+    elif err_ger < err_eng and err_ger < err_fra and err_ger < err_esp and err_ger < err_pol and err_ger < err_ita:
+         lang = "German language"
+
+    elif err_ita < err_eng and err_ita < err_fra and err_ita < err_esp and err_ita < err_ger and err_ita < err_pol:
+         lang = "Italian language"
+
+    elif err_esp < err_eng and err_esp < err_fra and err_esp < err_pol and err_esp < err_ger and err_esp < err_ita:
+         lang = "Spanish language"
+
+    else:
+         lang = "No language in the database or insufficient data"
+
+
+    try:
+        photo = PhotoImage(file = "plot.png")
+        l1.config(image = photo)
+        l1.image = photo
+        l1.place(x = 540, y = 20)
+        master.minsize(1200, 520)
+    except:
+        l1.place_forget()
+        master.minsize(540, 274)
+
+    l4.config(text = lang)
+    end = t.time()
+    print(end-start)
     
 
-recognition()        
-            
+
+master = Tk()
+master.minsize(540,274)
+master.configure(bg = "gray30")
+master.title("Language recognition")
 
 
+l1 = Label(master)
 
 
+l2 = Label(master, 
+           text  = "Website Address: ", 
+           bg    = "gray30", 
+           fg    = "white", 
+           font  = ("Verdana", 14))
+l2.place(x = 20, y = 10, width = 500, height = 64)
 
 
+e1 = Entry(master,  
+           fg    = "gray20", 
+           font  = ("Verdana", 14))
+e1.place(x = 20, y = 70, width = 500, height = 28)
 
 
+l3 = Label(master, 
+           text  = "Language:", 
+           bg    = "gray30", 
+           fg    = "white", 
+           font  = ("Verdana", 14))
+l3.place(x = 20, y = 118, width = 500, height = 64)
+
+
+l4 = Label(master, 
+           text  = "", 
+           bg    = "white", 
+           fg    = "gray20", 
+           font  = ("Verdana",14))
+l4.place(x = 20, y = 178, width = 500, height = 28)
+
+
+b1 = Button(master, 
+            text    = "Quit",
+            command = master.quit, 
+            bg      = "white", 
+            fg      = "gray20", 
+            font    = ("Verdana",12))
+b1.place(x = 20, y = 226, width = 60, height = 28)
+
+
+b2 = Button(master, 
+            text    = "Recognize", 
+            command = recognition, 
+            bg      = "white", 
+            fg      = "gray20", 
+            font    = ("Verdana",12))
+b2.place(x = 400, y = 226, width = 120, height = 28)
+
+
+mainloop( )   
