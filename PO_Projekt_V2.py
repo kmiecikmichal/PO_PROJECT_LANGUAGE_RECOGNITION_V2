@@ -9,7 +9,10 @@ from urllib.error import URLError
 from urllib.request import urlopen
 import time as t
 
+
+
 def recognition():
+
     start = t.time()
 
     try: os.remove("plot.png")
@@ -25,9 +28,15 @@ def recognition():
         master.minsize(540,274)
         return 
 
+    
     soup = BeautifulSoup(html,"html.parser")
-    w1 = soup.body.get_text().lower()
-    w = re.sub(" +", " ", w1)
+    w = ""
+    a_tags = soup.find_all('a')
+    for a in a_tags:
+        w = w + a.text.lower()
+    w2 = re.sub(r"([^abcdefghijklmnopqrstuvwxyząäàâáćçęéèêëæœïîíìłńñóòôößśüùûúÿżź '])", "  ", w)
+    words = re.sub(" +", " ", w2)
+
 
     all = ['a','b','c','d','e','f','g','h','i','j',
            'k','l','m','n','o','p','q','r','s','t',
@@ -37,68 +46,33 @@ def recognition():
            'ö','ß','ś','ü','ù','û','ú','ÿ','ż','ź',' ',"'"]
    
 
-    words = []
-    for i in w:
+    mod_bigrams = []
+    for i in all:
         for j in all:
-            if i == j:
-                words.append(i)
+            if not i == j == " ": #często się pojawiały 2 spacje
+                 mod_bigrams.append(i + j)
+
+
+    map_mod = dict()
+    for k in mod_bigrams:
+            map_mod[k] = 0
 
 
     bigrams = []
     for i in range (len(words)-1):
-                bigrams.append(words[i] + words[i+1])
-  
+            bigrams.append(words[i] + words[i+1])
 
-    uniques = []
-    for i in range (len(bigrams)):
-        if bigrams[i] not in uniques:
-            uniques.append(bigrams[i])
-    
-    
-    values = []
-    for i in range (len(uniques)):
-        v = [uniques[i], bigrams.count(uniques[i])/len(bigrams)]
-        values.append(v)
-    
-    
-    letters = []
-    for i in range (len(values)):
-        for j in range (len(values[i])):
-            if j == 1:
-                letters.append(values[i][0])
-    
 
-    model_bigrams = []
-    for i in all:
-        for j in all:
-            if not i == j == " ": #często się pojawiały 2 spacje
-                model_bigrams.append(i + j)
+    map_bigrams = dict()
+    for k in bigrams:
+        if not k in map_bigrams:
+            map_bigrams[k] = 1/len(bigrams)
+        else:
+            map_bigrams[k] += 1/len(bigrams)
+
+    map_mod.update(map_bigrams)
     
-    
-    model_values = []
-    for i in range (len(model_bigrams)):
-        model_values.append([model_bigrams[i], 0])
-
-    lan_big = letters
-    lan_map = values
-    mod_big = model_bigrams
-    mod_map = model_values
-
-    lan_big_new = []
-    lan_map_new = []
-
-    for i in range (len(lan_map)):
-        if lan_big[i] in mod_big:
-            lan_big_new.append(lan_big[i])
-            lan_map_new.append(lan_map[i])
-
-    for i in range (len(mod_map)):
-        if mod_big[i] not in lan_big_new:
-            lan_map_new.append(mod_map[i])
-
-    map_txt = sorted(lan_map_new)
-    
-
+   
     with open("PolishBase.txt", "rb",) as pol:
         map_pol = pickle.load(pol)
 
@@ -119,19 +93,17 @@ def recognition():
 
 
     err_pol, err_eng, err_fra, err_ger, err_ita, err_esp = 0, 0, 0, 0, 0, 0 
+    
+    for values in map_mod:
+        err_pol += ((map_mod[values] - map_pol[values]) ** 2)
+        err_eng += ((map_mod[values] - map_eng[values]) ** 2)
+        err_fra += ((map_mod[values] - map_fra[values]) ** 2)
+        err_ger += ((map_mod[values] - map_ger[values]) ** 2)
+        err_ita += ((map_mod[values] - map_ita[values]) ** 2)
+        err_esp += ((map_mod[values] - map_esp[values]) ** 2)
 
-    for i in range(len(map_txt)):
-        for j in range(len(map_txt[i])):
-            if j == 1:
-                err_pol += ((map_pol[i][j] - map_txt[i][j]) ** 2)
-                err_eng += ((map_eng[i][j] - map_txt[i][j]) ** 2)
-                err_fra += ((map_fra[i][j] - map_txt[i][j]) ** 2)
-                err_ger += ((map_ger[i][j] - map_txt[i][j]) ** 2)
-                err_ita += ((map_ita[i][j] - map_txt[i][j]) ** 2)
-                err_esp += ((map_esp[i][j] - map_txt[i][j]) ** 2)
- 
 
-    if   words != []:
+    if   len(words) > 10:
           
          try: plt.clf()
          except: pass
@@ -145,7 +117,7 @@ def recognition():
          plt.savefig("plot.png")
 
 
-    if   words == []:
+    if   len(words) <= 10:
          lang = "No language in the database or insufficient data"
 
     elif err_pol < err_eng and err_pol < err_fra and err_pol < err_esp and err_pol < err_ger and err_pol < err_ita:
@@ -169,6 +141,8 @@ def recognition():
     else:
          lang = "No language in the database or insufficient data"
 
+    end = t.time()
+    elapsed_time = round((end - start),5)
 
     try:
         photo = PhotoImage(file = "plot.png")
@@ -181,10 +155,9 @@ def recognition():
         master.minsize(540, 274)
 
     l4.config(text = lang)
-    end = t.time()
-    print(end-start)
-    
+    l5.config(text = ("elapsed time ", elapsed_time, "s"))
 
+    
 
 master = Tk()
 master.minsize(540,274)
@@ -223,6 +196,14 @@ l4 = Label(master,
            fg    = "gray20", 
            font  = ("Verdana",14))
 l4.place(x = 20, y = 178, width = 500, height = 28)
+
+
+l5 = Label(master, 
+           text  = "", 
+           bg    = "gray30", 
+           fg    = "white", 
+           font  = ("Verdana",8))
+l5.place(x = 20, y = 480, height = 20)
 
 
 b1 = Button(master, 

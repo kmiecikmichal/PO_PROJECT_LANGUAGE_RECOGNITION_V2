@@ -26,11 +26,17 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="EnglishBase.txt" />
+    <Content Include="EnglishText.txt" />
     <Content Include="FrenchBase.txt" />
+    <Content Include="FrenchText.txt" />
     <Content Include="GermanBase.txt" />
+    <Content Include="GermanText.txt" />
     <Content Include="ItalianBase.txt" />
+    <Content Include="ItalianText.txt" />
     <Content Include="PolishBase.txt" />
+    <Content Include="PolishText.txt" />
     <Content Include="SpanishBase.txt" />
+    <Content Include="SpanishText.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
